@@ -1,7 +1,12 @@
 #!/bin/sh
 addgroup deployers
+COUNT=$1
+if [ "x$1" = "x" ]; then
+    COUNT=80
+fi
+
 CT=1
-while [ $CT -le 80 ]; do
+while [ $CT -le ${COUNT} ]; do
     echo $CT
     MU=deploy${CT}
     echo "User: ${MU}"
