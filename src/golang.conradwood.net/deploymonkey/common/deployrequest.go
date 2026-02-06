@@ -66,16 +66,3 @@ func CreateDeployRequest(group *dm.GroupDefinitionRequest, app *dm.ApplicationDe
 	}
 	return res
 }
-
-func DeployRequest_DownloadURL(req *dm.ApplicationDefinition) string {
-	if !*use_artefact_server_url {
-		return req.DownloadURL
-	}
-	idx := strings.Index(req.DownloadURL, "dist/")
-	if idx == -1 {
-		return req.DownloadURL
-	}
-	path := req.DownloadURL[idx:]
-	url := fmt.Sprintf("artefact://%d/%d/%s", req.ArtefactID, req.BuildID, path)
-	return url
-}

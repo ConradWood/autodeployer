@@ -133,7 +133,8 @@ func (dt *deployTransaction) CacheEverywhere() error {
 		go func(r *dp.DeployRequest) {
 			defer wg.Done()
 			//			url := r.DownloadURL()
-			url := common.DeployRequest_DownloadURL(r.AppDef())
+			//			url := common.DeployRequest_DownloadURL(r.AppDef())
+			url := r.DownloadURL()
 			fmt.Printf("Caching %s on %s\n", url, r.AutodeployerHost())
 			ctx := authremote.ContextWithTimeout(time.Duration(60) * time.Second)
 			cl := r.GetAutodeployerClient()
