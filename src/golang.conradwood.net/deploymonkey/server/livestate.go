@@ -325,10 +325,12 @@ allow for some queries to autodeployer to fail, but not permanently
 func waitForCacheStatus(adc ad.AutoDeployerClient, dr *ad.DeployRequest, host string) error {
 	ad_lock := lockAutodeployerHost(host)
 	defer ad_lock.Unlock()
-	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", dr.Binary, host)
 	lastChanged := time.Now()
 	lastBytes := uint64(0)
-	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
+	//	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
+	//	ureq := &ad.URLRequest{URL: dr.DownloadURL}
+	ureq := &ad.URLRequest{URL: common.ResolvedDownloadURL(dr.AppReference.AppDef)}
+	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", ureq.URL, host)
 	query_succeeded := false
 	var lastResponse *ad.URLResponse
 	lastResponseReceived := time.Now()

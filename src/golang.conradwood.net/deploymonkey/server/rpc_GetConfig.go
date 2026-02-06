@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+
 	"golang.conradwood.net/go-easyops/errors"
+
 	//	"errors"
 	"fmt"
+
 	common "golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/deploymonkey"
 )
@@ -26,11 +29,13 @@ func (depl *DeployMonkey) GetConfig(ctx context.Context, cr *common.Void) (*pb.C
 	if err != nil {
 		return nil, err
 	}
+	//	fmt.Printf("%d namespaces\n", len(ns.NameSpaces))
 	for _, n := range ns.NameSpaces {
 		gns, err := depl.GetGroups(ctx, &pb.GetGroupsRequest{NameSpace: n})
 		if err != nil {
 			return nil, errors.Errorf("Failed to get groups: %s", err)
 		}
+		//fmt.Printf("namespace %s has %d groups\n", n, len(gns.Groups))
 		for _, gs := range gns.Groups {
 			gc := &pb.GroupConfig{Group: gs}
 			gar := pb.GetAppsRequest{NameSpace: gs.NameSpace, GroupName: gs.GroupID}
@@ -51,9 +56,7 @@ func (s *DeployMonkey) GetGroups(ctx context.Context, cr *pb.GetGroupsRequest) (
 		return nil, errors.Errorf("Namespace required")
 	}
 	resp := pb.GetGroupsResponse{}
-
 	dbg, err := groupHandler.FindAppGroupByNamespace(ctx, cr.NameSpace)
-	//		dbg, err := getGroupFromDatabase(ctx, cr.NameSpace, name)
 	if err != nil {
 		return nil, err
 	}

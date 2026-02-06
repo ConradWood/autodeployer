@@ -3,7 +3,6 @@ package common
 import (
 	"flag"
 	"fmt"
-	"strings"
 
 	ad "golang.conradwood.net/apis/autodeployer"
 	dm "golang.conradwood.net/apis/deploymonkey"
@@ -14,8 +13,7 @@ const (
 )
 
 var (
-	use_artefact_server_url = flag.Bool("use_artefact_server_url", false, "use artefact:// instead of http:// urls")
-	deployer_name           = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
+	deployer_name = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
 )
 
 func CreateInfoRequest() *ad.InfoRequest {
@@ -33,8 +31,7 @@ func CreateDeployRequest(group *dm.GroupDefinitionRequest, app *dm.ApplicationDe
 		app.DeploymentID = CreateDeploymentID(app)
 	}
 	app.Limits = AppLimits(app) // if non assigned in deploy.yaml, create a default applimits, otherwise use deploy.yaml values
-	url := app.DownloadURL
-	url = strings.ReplaceAll(url, "${BUILDID}", fmt.Sprintf("%d", app.BuildID))
+	url := ResolvedDownloadURL(app)
 	res := &ad.DeployRequest{
 		Deployer:         *deployer_name,
 		DownloadURL:      url,
@@ -65,17 +62,4 @@ func CreateDeployRequest(group *dm.GroupDefinitionRequest, app *dm.ApplicationDe
 		res.Namespace = group.Namespace
 	}
 	return res
-}
-
-func DeployRequest_DownloadURL(req *dm.ApplicationDefinition) string {
-	if !*use_artefact_server_url {
-		return req.DownloadURL
-	}
-	idx := strings.Index(req.DownloadURL, "dist/")
-	if idx == -1 {
-		return req.DownloadURL
-	}
-	path := req.DownloadURL[idx:]
-	url := fmt.Sprintf("artefact://%d/%d/%s", req.ArtefactID, req.BuildID, path)
-	return url
 }

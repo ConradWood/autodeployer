@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "golang.conradwood.net/apis/deploymonkey"
-	"golang.conradwood.net/deploymonkey/db"
-	"golang.conradwood.net/go-easyops/errors"
 	"sync"
 	"time"
+
+	pb "golang.conradwood.net/apis/deploymonkey"
+	"golang.conradwood.net/deploymonkey/cache"
+	"golang.conradwood.net/deploymonkey/db"
+	"golang.conradwood.net/go-easyops/errors"
 )
 
 /*
@@ -26,19 +28,22 @@ var (
 )
 
 type Group2Handler struct {
-	db_gv  *db.DBGroupVersion
-	db_ag  *db.DBAppGroup
-	db_lag *db.DBLinkAppGroup
+	db_gv       *db.DBGroupVersion
+	db_ag       *db.DBAppGroup
+	db_lag      *db.DBLinkAppGroup
+	group_cache *cache.GroupCache
 }
+
 type creator interface {
 	CreateTable(ctx context.Context) error
 }
 
 func start_group2_handler() error {
 	g2 := &Group2Handler{
-		db_gv:  db.NewDBGroupVersion(dbcon),
-		db_ag:  db.NewDBAppGroup(dbcon),
-		db_lag: db.NewDBLinkAppGroup(dbcon),
+		group_cache: cache.NewGroupCache(),
+		db_gv:       db.NewDBGroupVersion(dbcon),
+		db_ag:       db.NewDBAppGroup(dbcon),
+		db_lag:      db.NewDBLinkAppGroup(dbcon),
 	}
 	g2.db_gv.SQLTablename = "group_version"
 	g2.db_ag.SQLTablename = "appgroup"
@@ -99,7 +104,15 @@ func (g *Group2Handler) CreateGroupVersion(ctx context.Context, group *pb.GroupD
 	}
 	return gv, nil
 }
+func (g *Group2Handler) ResetCache() {
+	g.group_cache.Reset()
+}
+
 func (g *Group2Handler) FindAppGroupByNamespace(ctx context.Context, namespace string) (*pb.AppGroup, error) {
+	res := g.group_cache.ByNameSpace(ctx, namespace)
+	if res != nil {
+		return res, nil
+	}
 	ags, err := g.db_ag.ByNamespace(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -107,7 +120,9 @@ func (g *Group2Handler) FindAppGroupByNamespace(ctx context.Context, namespace s
 	if len(ags) == 0 {
 		return nil, nil
 	}
-	return ags[0], nil
+	res = ags[0]
+	g.group_cache.AddWithNameSpace(ctx, namespace, res)
+	return res, nil
 
 }
 func (g *Group2Handler) FindOrCreateAppGroupByNamespace(ctx context.Context, namespace string) (*pb.AppGroup, error) {
