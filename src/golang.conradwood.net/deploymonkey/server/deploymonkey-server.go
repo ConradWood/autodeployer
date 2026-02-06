@@ -130,6 +130,7 @@ func main() {
 }
 func startup() {
 	server.SetHealth(common.Health_READY)
+	fmt.Printf("Server started\n")
 }
 func test_scanner() {
 	ScanAutodeployersTest()
