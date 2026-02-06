@@ -16,6 +16,8 @@ func (depl *DeployMonkey) NewBuildAvailable(ctx context.Context, req *dm.NewBuil
 	if err != nil {
 		return nil, errors.Errorf("parser failed: %w", err)
 	}
+	appdef_cache.Reset()
+	groupHandler.group_cache.Reset()
 	for _, group := range fd.Groups {
 		// add stuff to group (which isn't in deploy.yaml, but in metadata instead
 		for _, app := range group.Applications {
