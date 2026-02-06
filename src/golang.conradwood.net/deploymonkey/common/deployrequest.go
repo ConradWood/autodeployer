@@ -3,9 +3,10 @@ package common
 import (
 	"flag"
 	"fmt"
+	"strings"
+
 	ad "golang.conradwood.net/apis/autodeployer"
 	dm "golang.conradwood.net/apis/deploymonkey"
-	"strings"
 )
 
 const (
@@ -13,7 +14,8 @@ const (
 )
 
 var (
-	deployer_name = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
+	use_artefact_server_url = flag.Bool("use_artefact_server_url", false, "use artefact:// instead of http:// urls")
+	deployer_name           = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
 )
 
 func CreateInfoRequest() *ad.InfoRequest {
@@ -63,4 +65,17 @@ func CreateDeployRequest(group *dm.GroupDefinitionRequest, app *dm.ApplicationDe
 		res.Namespace = group.Namespace
 	}
 	return res
+}
+
+func DeployRequest_DownloadURL(req *dm.ApplicationDefinition) string {
+	if !*use_artefact_server_url {
+		return req.DownloadURL
+	}
+	idx := strings.Index(req.DownloadURL, "dist/")
+	if idx == -1 {
+		return req.DownloadURL
+	}
+	path := req.DownloadURL[idx:]
+	url := fmt.Sprintf("artefact://%d/%d/%s", req.ArtefactID, req.BuildID, path)
+	return url
 }

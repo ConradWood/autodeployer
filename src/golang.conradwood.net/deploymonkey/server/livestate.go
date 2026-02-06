@@ -16,9 +16,13 @@ import (
 	//	"errors"
 	"flag"
 	"fmt"
+	"strings"
+	"time"
+
 	ad "golang.conradwood.net/apis/autodeployer"
 	pb "golang.conradwood.net/apis/deploymonkey"
 	rpb "golang.conradwood.net/apis/registry"
+	"golang.conradwood.net/deploymonkey/common"
 	dc "golang.conradwood.net/deploymonkey/common"
 	"golang.conradwood.net/deploymonkey/db"
 	"golang.conradwood.net/go-easyops/authremote"
@@ -28,8 +32,6 @@ import (
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc"
-	"strings"
-	"time"
 )
 
 const (
@@ -80,7 +82,7 @@ func MakeItSo(ads []*pb.ApplicationDefinition, version int) error {
 			return errors.Errorf("Refusing to deploy application %s with buildid #0", ad.Binary)
 		}
 	}
-	fmt.Printf("Request to upgrade %d apps to version %d\n", len(ads), version)
+	fmt.Printf("[livestate] Request to upgrade %d apps to version %d\n", len(ads), version)
 	m := miso{ads: ads, version: version}
 	asyncMaker <- m
 	return nil
@@ -120,10 +122,10 @@ func MakeItSoAsync(m miso) error {
 		return err
 	}
 	if len(old_path) == 0 {
-		fmt.Printf("no oldstyle stuff to do for this deployment.\n")
+		fmt.Printf("[livestate] no oldstyle stuff to do for this deployment.\n")
 		return nil
 	}
-	//	fmt.Printf("Applying group %v, version %d\n", group, m.version)
+	//	fmt.Printf("[livestate] Applying group %v, version %d\n", group, m.version)
 
 	sas, err := GetDeployers()
 	if err != nil {
@@ -180,7 +182,7 @@ func MakeItSoAsync(m miso) error {
 		mgroup := app.Machines
 		fsas, err := getDeployersInGroup(mgroup, sas)
 		if err != nil {
-			fmt.Printf("Could not get deployers for group \"%s\": %s\n", mgroup, err)
+			fmt.Printf("[livestate] Could not get deployers for group \"%s\": %s\n", mgroup, err)
 		}
 		if (fsas == nil) || (len(fsas) == 0) {
 			s := fmt.Sprintf("No deployers to deploy on for group \"%s\" (app=%v)", mgroup, old_path)
@@ -190,8 +192,8 @@ func MakeItSoAsync(m miso) error {
 			return errors.Errorf("%s", s)
 		}
 		workers := len(fsas)
-		fmt.Printf("Got %d hosts to deploy on\n", workers)
-		fmt.Printf("Starting %d instances of %d\n", app.Instances, app.RepositoryID)
+		fmt.Printf("[livestate] Got %d hosts to deploy on\n", workers)
+		fmt.Printf("[livestate] Starting %d instances of %d\n", app.Instances, app.RepositoryID)
 		instances := 0
 
 		retries := 5
@@ -220,16 +222,16 @@ func MakeItSoAsync(m miso) error {
 			time.Sleep(1)
 			// deadline expired? reset context
 			retries--
-			fmt.Printf("failed to deploy an instance: %s (retries=%d)\n", terr, retries)
+			fmt.Printf("[livestate] failed to deploy an instance: %s (retries=%d)\n", terr, retries)
 		}
 	}
 	if res_err != nil {
 		cancelStop(trans, user_messages, fmt.Sprintf("%s", res_err))
 	} else {
 		if *debug { // NOT A DEBUG IF CLAUSE
-			fmt.Printf("Deployed %d instances:\n", len(startupids))
+			fmt.Printf("[livestate] Deployed %d instances:\n", len(startupids))
 			for k, v := range startupids {
-				fmt.Printf("  %s on %s\n", k, v.Host)
+				fmt.Printf("[livestate]   %s on %s\n", k, v.Host)
 			}
 		}
 		for k, v := range startupids {
@@ -256,11 +258,11 @@ func deployOn(sa *rpb.ServiceAddress, app *pb.ApplicationDefinition) (string, st
 		return "", "", err
 	}
 	groupid := gr.ID
-	fmt.Printf("Deploying app on host %s:\n", sa.Host)
+	fmt.Printf("[livestate] Deploying app on host %s:\n", sa.Host)
 	dc.PrintApp(app)
 	conn, err := DialService(sa)
 	if err != nil {
-		fmt.Printf("Failed to connect to service %v\n", sa)
+		fmt.Printf("[livestate] Failed to connect to service %v\n", sa)
 		return "", "failed to connect to server", err
 	}
 	defer conn.Close()
@@ -288,10 +290,10 @@ func deployOn(sa *rpb.ServiceAddress, app *pb.ApplicationDefinition) (string, st
 	if *precache {
 		err = waitForCacheStatus(adc, dr, sa.Host)
 		if err != nil {
-			fmt.Printf("Failed to check cache status. presumed to be old autodeployer. continuing with deploy (%s)\n", err)
+			fmt.Printf("[livestate] Failed to check cache status. presumed to be old autodeployer. continuing with deploy (%s)\n", err)
 		}
 	}
-	fmt.Printf("Sending deploy request to %s...\n", sa)
+	fmt.Printf("[livestate] Sending deploy request to %s...\n", sa)
 	ctx = authremote.Context()
 	ad_lock := lockAutodeployerHost(sa.Host)
 	defer ad_lock.Unlock()
@@ -321,10 +323,10 @@ allow for some queries to autodeployer to fail, but not permanently
 func waitForCacheStatus(adc ad.AutoDeployerClient, dr *ad.DeployRequest, host string) error {
 	ad_lock := lockAutodeployerHost(host)
 	defer ad_lock.Unlock()
-	fmt.Printf("Checking cache status of %s on %s...\n", dr.Binary, host)
+	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", dr.Binary, host)
 	lastChanged := time.Now()
 	lastBytes := uint64(0)
-	ureq := &ad.URLRequest{URL: dr.DownloadURL}
+	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
 	query_succeeded := false
 	var lastResponse *ad.URLResponse
 	lastResponseReceived := time.Now()
@@ -347,7 +349,7 @@ func waitForCacheStatus(adc ad.AutoDeployerClient, dr *ad.DeployRequest, host st
 
 		query_succeeded = true
 		if lastResponse.BytesDownloaded == lastResponse.TotalBytes {
-			fmt.Printf("cache status of %s on %s completed (%d of %d bytes)\n", dr.Binary, host, lastResponse.BytesDownloaded, lastResponse.TotalBytes)
+			fmt.Printf("[livestate] cache status of %s on %s completed (%d of %d bytes)\n", dr.Binary, host, lastResponse.BytesDownloaded, lastResponse.TotalBytes)
 			setPreCacheGauge(host, lastResponse.TotalBytes, lastResponse.BytesDownloaded)
 			return nil
 		}
@@ -376,7 +378,7 @@ func getDeployments(adc ad.AutoDeployerClient, sa *rpb.ServiceAddress, deplid st
 	ctx := authremote.Context()
 	info, err := adc.GetDeployments(ctx, dc.CreateInfoRequest())
 	if err != nil {
-		fmt.Printf("Failed to query service %v: %s\n", sa, err)
+		fmt.Printf("[livestate] Failed to query service %v: %s\n", sa, err)
 		return nil, err
 	}
 	for _, app := range info.Apps {
@@ -400,7 +402,7 @@ func getDeployersInGroup(name string, all []*rpb.ServiceAddress) ([]*rpb.Service
 	for _, sa := range all {
 		conn, err := DialService(sa)
 		if err != nil {
-			fmt.Printf("Failed to connect to service %v\n", sa)
+			fmt.Printf("[livestate] Failed to connect to service %v\n", sa)
 			continue
 		}
 		ctx := authremote.Context()
@@ -409,7 +411,7 @@ func getDeployersInGroup(name string, all []*rpb.ServiceAddress) ([]*rpb.Service
 		mir, err := adc.GetMachineInfo(ctx, req)
 		if err != nil {
 			conn.Close()
-			fmt.Printf("Failed to get machine info on %v\n", sa)
+			fmt.Printf("[livestate] Failed to get machine info on %v\n", sa)
 			continue
 		}
 		conn.Close()
@@ -417,7 +419,7 @@ func getDeployersInGroup(name string, all []*rpb.ServiceAddress) ([]*rpb.Service
 		if len(mg) == 0 {
 			mg = []string{"worker"}
 		}
-		fmt.Printf("Autodeployer on %s is in group %s (requested: %s)\n", sa.Host, mg, name)
+		fmt.Printf("[livestate] Autodeployer on %s is in group %s (requested: %s)\n", sa.Host, mg, name)
 
 		if ContainsGroup(mg, name) {
 			res = append(res, sa)
@@ -432,7 +434,7 @@ func GetDeployers() ([]*rpb.ServiceAddress, error) {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	conn, err := grpc.Dial(cmdline.GetRegistryAddress(), opts...)
 	if err != nil {
-		fmt.Printf("Error dialling registry @ %s\n", cmdline.GetRegistryAddress())
+		fmt.Printf("[livestate] Error dialling registry @ %s\n", cmdline.GetRegistryAddress())
 		return nil, err
 	}
 	defer conn.Close()
@@ -453,7 +455,7 @@ func GetDeployers() ([]*rpb.ServiceAddress, error) {
 			RoutingInfo: r.Target.RoutingInfo,
 		}
 		res = append(res, sa)
-		//fmt.Printf("Counting autodeployer at %s\n", r.Target.IP)
+		//fmt.Printf("[livestate] Counting autodeployer at %s\n", r.Target.IP)
 	}
 	return res, nil
 }
@@ -475,14 +477,14 @@ func stopSingleApp(stop *StopRequest) ([]string, error) {
 	for _, sa := range sas {
 		conn, err := DialService(sa)
 		if err != nil {
-			fmt.Printf("Failed to connect to service %s (%s)\n", sa.Host, err)
+			fmt.Printf("[livestate] Failed to connect to service %s (%s)\n", sa.Host, err)
 			continue
 		}
 		adc := ad.NewAutoDeployerClient(conn)
 
 		apps, err := getDeployments(adc, sa, "")
 
-		//	fmt.Printf("apps %v\n", apps)
+		//	fmt.Printf("[livestate] apps %v\n", apps)
 
 		if err != nil {
 			conn.Close()
@@ -495,12 +497,12 @@ func stopSingleApp(stop *StopRequest) ([]string, error) {
 			}
 			an := fmt.Sprintf("%s/%s/%d/%s on %s (%s) (%s)", a.Namespace, a.Groupname, a.RepositoryID, a.Binary, sa.Host, a.DeploymentID, ap.ID)
 			res = append(res, sa.Host)
-			fmt.Printf("Undeploying: %s\n", an)
+			fmt.Printf("[livestate] Undeploying: %s\n", an)
 
 			ud := ad.UndeployRequest{ID: ap.ID}
 			_, err = adc.Undeploy(authremote.Context(), &ud)
 			if err != nil {
-				fmt.Printf("Failed to shutdown %s (%s)\n", an, err)
+				fmt.Printf("[livestate] Failed to shutdown %s (%s)\n", an, err)
 			}
 
 		}
@@ -513,7 +515,7 @@ func stopSingleApp(stop *StopRequest) ([]string, error) {
 // this call DOES NOT CLOSE THE CONNECTION
 func DialService(sa *rpb.ServiceAddress) (*grpc.ClientConn, error) {
 	serverAddr := fmt.Sprintf("%s:%d", sa.Host, sa.Port)
-	//fmt.Printf("Dialling service at \"%s\"\n", serverAddr)
+	//fmt.Printf("[livestate] Dialling service at \"%s\"\n", serverAddr)
 
 	creds := client.GetClientCreds()
 	cc, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(creds))
@@ -521,7 +523,7 @@ func DialService(sa *rpb.ServiceAddress) (*grpc.ClientConn, error) {
 	//	opts = []grpc.DialOption{grpc.WithInsecure()}
 	// cc, err := grpc.Dial(serverAddr, opts...)
 	if err != nil {
-		fmt.Printf("Error dialling servicename @ %s\n", serverAddr)
+		fmt.Printf("[livestate] Error dialling servicename @ %s\n", serverAddr)
 		return nil, err
 	}
 	//defer cc.Close()

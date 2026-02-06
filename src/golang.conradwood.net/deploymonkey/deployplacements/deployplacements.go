@@ -38,7 +38,7 @@ func (dr *DeployRequest) DownloadURL() string {
 }
 
 // the url as defined in deploy.yaml
-func (dr *DeployRequest) URL() string {
+func (dr *DeployRequest) OriginalURL() string {
 	return dr.AppDef().DownloadURL
 }
 func (dr *DeployRequest) AppDef() *pb.ApplicationDefinition {

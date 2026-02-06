@@ -4,6 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	ad "golang.conradwood.net/apis/autodeployer"
 	pb "golang.conradwood.net/apis/deploymonkey"
 	"golang.conradwood.net/deploymonkey/common"
@@ -11,9 +15,6 @@ import (
 	dp "golang.conradwood.net/deploymonkey/deployplacements"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/errors"
-	"strings"
-	"sync"
-	"time"
 )
 
 var (
@@ -131,10 +132,12 @@ func (dt *deployTransaction) CacheEverywhere() error {
 		wg.Add(1)
 		go func(r *dp.DeployRequest) {
 			defer wg.Done()
-			fmt.Printf("Caching %s on %s\n", r.DownloadURL(), r.AutodeployerHost())
+			//			url := r.DownloadURL()
+			url := common.DeployRequest_DownloadURL(r.AppDef())
+			fmt.Printf("Caching %s on %s\n", url, r.AutodeployerHost())
 			ctx := authremote.ContextWithTimeout(time.Duration(60) * time.Second)
 			cl := r.GetAutodeployerClient()
-			_, err := cl.CacheURL(ctx, &ad.URLRequest{URL: r.DownloadURL()})
+			_, err := cl.CacheURL(ctx, &ad.URLRequest{URL: url})
 			if err != nil {
 				xerr = errors.Errorf("(caching %s): failed to cache on %s: %s", r.DownloadURL(), r.AutodeployerHost(), err)
 				return
@@ -168,7 +171,7 @@ func (dt *deployTransaction) StartEverywhere() error {
 		wg.Add(1)
 		go func(r *dp.DeployRequest) {
 			defer wg.Done()
-			fmt.Printf("Deploying %s on %s\n", r.URL(), r.AutodeployerHost())
+			fmt.Printf("Deploying %s on %s\n", r.OriginalURL(), r.AutodeployerHost())
 			started := time.Now()
 			ctx := authremote.ContextWithTimeout(*deploy_timeout)
 			cl := r.GetAutodeployerClient()
