@@ -3,7 +3,6 @@ package common
 import (
 	"flag"
 	"fmt"
-	"strings"
 
 	ad "golang.conradwood.net/apis/autodeployer"
 	dm "golang.conradwood.net/apis/deploymonkey"
@@ -32,8 +31,7 @@ func CreateDeployRequest(group *dm.GroupDefinitionRequest, app *dm.ApplicationDe
 		app.DeploymentID = CreateDeploymentID(app)
 	}
 	app.Limits = AppLimits(app) // if non assigned in deploy.yaml, create a default applimits, otherwise use deploy.yaml values
-	url := app.DownloadURL
-	url = strings.ReplaceAll(url, "${BUILDID}", fmt.Sprintf("%d", app.BuildID))
+	url := ResolvedDownloadURL(app)
 	res := &ad.DeployRequest{
 		Deployer:         *deployer_name,
 		DownloadURL:      url,
