@@ -18,7 +18,9 @@ func ResolvedDownloadURL(app *dm.ApplicationDefinition) string {
 	idx := strings.Index(app.DownloadURL, "dist/")
 	if idx == -1 {
 		use_artefact = false
-
+	}
+	if !strings.HasPrefix(app.DownloadURL, "http://") {
+		use_artefact = false
 	}
 	if !use_artefact {
 		s := app.DownloadURL
