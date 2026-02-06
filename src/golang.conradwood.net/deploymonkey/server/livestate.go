@@ -277,7 +277,7 @@ func deployOn(sa *rpb.ServiceAddress, app *pb.ApplicationDefinition) (string, st
 	adc := ad.NewAutoDeployerClient(conn)
 	dr := dc.CreateDeployRequest(nil, app)
 
-	dr.DownloadURL = replaceVars(app.DownloadURL, vars)
+	//	dr.DownloadURL = replaceVars(app.DownloadURL, vars)
 	dr.DeploymentID = deplid
 	dr.AppReference = &pb.AppReference{ID: app.ID, AppDef: app}
 
@@ -302,7 +302,7 @@ func deployOn(sa *rpb.ServiceAddress, app *pb.ApplicationDefinition) (string, st
 
 	dres, err := adc.Deploy(ctx, dr)
 	if err != nil {
-		s := fmt.Sprintf("failed to deploy #%d(%d) on %v: %s\n", app.BuildID, app.RepositoryID, adc, err)
+		s := fmt.Sprintf("failed to deploy #%d(%d): %s\n", app.BuildID, app.RepositoryID, errors.ErrorString(err))
 		fmt.Print(s)
 		return "", s, err
 	}
@@ -325,12 +325,10 @@ allow for some queries to autodeployer to fail, but not permanently
 func waitForCacheStatus(adc ad.AutoDeployerClient, dr *ad.DeployRequest, host string) error {
 	ad_lock := lockAutodeployerHost(host)
 	defer ad_lock.Unlock()
+	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", dr.Binary, host)
 	lastChanged := time.Now()
 	lastBytes := uint64(0)
-	//	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
-	//	ureq := &ad.URLRequest{URL: dr.DownloadURL}
-	ureq := &ad.URLRequest{URL: common.ResolvedDownloadURL(dr.AppReference.AppDef)}
-	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", ureq.URL, host)
+	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
 	query_succeeded := false
 	var lastResponse *ad.URLResponse
 	lastResponseReceived := time.Now()

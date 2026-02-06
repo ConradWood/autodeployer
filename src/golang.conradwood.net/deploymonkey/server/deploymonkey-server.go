@@ -17,7 +17,6 @@ import (
 	common "golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/deploymonkey"
 	rpb "golang.conradwood.net/apis/registry"
-	"golang.conradwood.net/deploymonkey/cache"
 	dc "golang.conradwood.net/deploymonkey/common"
 	"golang.conradwood.net/deploymonkey/db"
 	"golang.conradwood.net/deploymonkey/scheduler"
@@ -32,10 +31,9 @@ import (
 
 // static variables for flag parser
 var (
-	appdef_cache = cache.NewAppDefCache()
-	debug        = flag.Bool("debug", false, "more logging...")
-	limit        = flag.Int("limit", 100, "max entries to return when querying for lists")
-	port         = flag.Int("port", 4999, "The server port")
+	debug = flag.Bool("debug", false, "more logging...")
+	limit = flag.Int("limit", 100, "max entries to return when querying for lists")
+	port  = flag.Int("port", 4999, "The server port")
 	/*
 		dbhost           = flag.String("dbhost", "localhost", "hostname of the postgres database rdms")
 		dbdb             = flag.String("database", "deploymonkey", "database to use for authentication")
@@ -240,10 +238,7 @@ func getGroupLatestVersion(ctx context.Context, namespace string, groupname stri
 
 // given a group version will load all its apps into objects
 func loadAppGroupVersion(ctx context.Context, version uint32) ([]*pb.ApplicationDefinition, error) {
-	res := appdef_cache.GetAppGroupVersion(version)
-	if res != nil && len(res) > 0 {
-		return res, nil
-	}
+	var res []*pb.ApplicationDefinition
 	if version == 0 {
 		return res, nil
 	}
@@ -276,7 +271,7 @@ func loadAppGroupVersion(ctx context.Context, version uint32) ([]*pb.Application
 		}
 		res = append(res, r)
 	}
-	appdef_cache.AddAppGroupVersion(version, res)
+
 	return res, nil
 
 }

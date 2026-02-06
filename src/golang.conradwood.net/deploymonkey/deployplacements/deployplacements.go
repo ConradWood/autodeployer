@@ -2,6 +2,7 @@ package deployplacements
 
 import (
 	"fmt"
+	"strings"
 
 	ad "golang.conradwood.net/apis/autodeployer"
 	pb "golang.conradwood.net/apis/deploymonkey"
@@ -27,6 +28,13 @@ func (dr *DeployRequest) AutodeployerHost() string {
 }
 func (dr *DeployRequest) Deployer() *common.Deployer {
 	return dr.sa
+}
+
+// the url with variables resolved
+func (dr *DeployRequest) DownloadURL() string {
+	s := dr.AppDef().DownloadURL
+	s = strings.ReplaceAll(s, "${BUILDID}", fmt.Sprintf("%d", dr.AppDef().BuildID))
+	return s
 }
 
 // the url as defined in deploy.yaml
