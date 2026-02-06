@@ -14,8 +14,7 @@ const (
 )
 
 var (
-	use_artefact_server_url = flag.Bool("use_artefact_server_url", false, "use artefact:// instead of http:// urls")
-	deployer_name           = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
+	deployer_name = flag.String("deployer_name", "deploymonkey", "name of a deploymonkey, can be used to partition autodeployers between deploymonkeys")
 )
 
 func CreateInfoRequest() *ad.InfoRequest {
