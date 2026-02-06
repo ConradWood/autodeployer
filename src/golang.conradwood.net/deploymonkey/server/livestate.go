@@ -290,7 +290,9 @@ func deployOn(sa *rpb.ServiceAddress, app *pb.ApplicationDefinition) (string, st
 	if *precache {
 		err = waitForCacheStatus(adc, dr, sa.Host)
 		if err != nil {
-			fmt.Printf("[livestate] Failed to check cache status. presumed to be old autodeployer. continuing with deploy (%s)\n", err)
+			s := fmt.Sprintf("[livestate] Failed to check cache status. presumed to be old autodeployer. continuing with deploy (%s)\n", err)
+			fmt.Print(s)
+			return "", s, err
 		}
 	}
 	fmt.Printf("[livestate] Sending deploy request to %s...\n", sa)
