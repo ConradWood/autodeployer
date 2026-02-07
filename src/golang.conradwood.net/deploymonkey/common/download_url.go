@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	use_artefact_bzip2      = flag.Bool("use_artefact_bzip2", false, "add .bz2 to artefact url")
+	use_artefact_bzip2      = flag.Bool("use_artefact_bzip2", true, "add .bz2 to artefact url")
 	use_artefact_server_url = flag.Bool("use_artefact_server_url", true, "use artefact:// instead of http:// urls")
 )
 
