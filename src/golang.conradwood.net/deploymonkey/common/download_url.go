@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	use_artefact_server_url = flag.Bool("use_artefact_server_url", false, "use artefact:// instead of http:// urls")
+	use_artefact_server_url = flag.Bool("use_artefact_server_url", true, "use artefact:// instead of http:// urls")
 )
 
 // the url with variables resolved
