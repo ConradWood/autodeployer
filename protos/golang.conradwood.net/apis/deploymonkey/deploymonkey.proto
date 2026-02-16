@@ -384,6 +384,7 @@ message AppMeta {
 message ApplyStream {
   string StdOutLine=1;
 }
+
 message AppChangeRequest {
   string DeploymentID = 1;
   autodeployercommon.DeploymentStatus Status = 2;
@@ -392,6 +393,7 @@ message AppChangeRequest {
   uint32 RuntimeSeconds=5;
   bool IPCSupported=6;
   string IPCName=7;
+  common.Health Health=8;
 }
 /*
 the deploymonkeyservice orchestrates deployments
