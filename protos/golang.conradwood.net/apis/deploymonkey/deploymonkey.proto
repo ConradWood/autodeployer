@@ -10,6 +10,7 @@ option java_package = "net.conradwood.golang.apis.deploymonkey";
 //import "golang.conradwood.net/apis/commondeploy/commondeploy.proto";
 import "golang.conradwood.net/apis/common/common.proto";
 import "golang.conradwood.net/apis/grafanadata/grafanadata.proto";
+import "golang.yacloud.eu/apis/autodeployercommon/autodeployercommon.proto";
 
 message DeploymentLog {
   uint64 ID=1;
@@ -383,7 +384,12 @@ message AppMeta {
 message ApplyStream {
   string StdOutLine=1;
 }
-
+message AppChangeRequest {
+  string DeploymentID = 1;
+  string Deploymentpath = 2;
+  autodeployercommon.DeploymentStatus Status = 3;
+  AppReference AppRef=4;
+}
 /*
 the deploymonkeyservice orchestrates deployments
  */
@@ -438,5 +444,6 @@ service DeployMonkey {
   rpc DeleteVersion(DelVersionRequest) returns (common.Void);
   // make it queryable
   rpc QueryTimeseries(grafanadata.QueryRequest) returns (stream grafanadata.QueryResponse);
-
+  // autodeployer reports a status change of an app
+  rpc AppChanged(AppChangeRequest) returns (common.Void);
 }
