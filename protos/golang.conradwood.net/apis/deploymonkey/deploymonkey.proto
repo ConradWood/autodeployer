@@ -386,9 +386,12 @@ message ApplyStream {
 }
 message AppChangeRequest {
   string DeploymentID = 1;
-  string Deploymentpath = 2;
-  autodeployercommon.DeploymentStatus Status = 3;
-  AppReference AppRef=4;
+  autodeployercommon.DeploymentStatus Status = 2;
+  AppReference AppRef=3;
+  bool UndeployRequestReceived=4;
+  uint32 RuntimeSeconds=5;
+  bool IPCSupported=6;
+  string IPCName=7;
 }
 /*
 the deploymonkeyservice orchestrates deployments
