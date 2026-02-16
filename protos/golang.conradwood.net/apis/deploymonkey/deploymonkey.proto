@@ -374,11 +374,25 @@ message NewBuildAvailableRequest {
   uint64 RepositoryID=7; // backwards compatibility only. will be removed in future!
 }
 
+// this is to track stuff like user asked this application to be undeployed (to prevent it from being picked up in suggestions)
 message AppMeta {
   uint64 ID=1;
   bool UserRequestedStop=2;
   uint32 Created=3;
   ApplicationDefinition AppDef=4  [(common.sql_name)="app_id",(common.sql_type)="uint64",(common.sql_reference)="applicationdefinition.id"];
+}
+enum IPCTrackStatus {
+  Undefined=0;
+  NotSupported=1;
+  Supported=2;
+}
+
+// this tracks stuff that is derived from the behaviour of the app
+message AppStats {
+  uint64 ID=1;
+  ApplicationDefinition AppDef=2  [(common.sql_name)="app_id",(common.sql_type)="uint64",(common.sql_reference)="applicationdefinition.id"];
+  IPCTrackStatus IPCTrackStatus=3;
+  uint32 UnexpectedRestarts=4;
 }
 
 message ApplyStream {
