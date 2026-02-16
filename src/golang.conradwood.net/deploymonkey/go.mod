@@ -9,12 +9,13 @@ replace golang.conradwood.net/apis/commondeploy => ../apis/commondeploy
 require (
 	github.com/lib/pq v1.11.1
 	golang.conradwood.net/apis/autodeployer v1.1.4381
-	golang.conradwood.net/apis/common v1.1.4397
+	golang.conradwood.net/apis/common v1.1.4400
 	golang.conradwood.net/apis/deploymonkey v1.1.4251
-	golang.conradwood.net/apis/grafanadata v1.1.4397
+	golang.conradwood.net/apis/grafanadata v1.1.4400
 	golang.conradwood.net/apis/registry v1.1.4381
 	golang.conradwood.net/apis/slackgateway v1.1.4381
 	golang.conradwood.net/go-easyops v0.1.39103
+	golang.yacloud.eu/apis/autodeployercommon v1.1.4400
 	google.golang.org/grpc v1.78.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -45,7 +46,6 @@ require (
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	golang.yacloud.eu/apis/autodeployer2 v1.1.4381 // indirect
-	golang.yacloud.eu/apis/autodeployercommon v1.1.4397 // indirect
 	golang.yacloud.eu/apis/faultindicator v1.1.4381 // indirect
 	golang.yacloud.eu/apis/fscache v1.1.4381 // indirect
 	golang.yacloud.eu/apis/session v1.1.4381 // indirect

@@ -4,10 +4,10 @@ go 1.24.0
 
 require (
 	github.com/golang/protobuf v1.5.4
-	golang.conradwood.net/apis/common v1.1.4397
-	golang.conradwood.net/apis/grafanadata v1.1.4397
+	golang.conradwood.net/apis/common v1.1.4400
+	golang.conradwood.net/apis/grafanadata v1.1.4400
 	golang.org/x/net v0.49.0
-	golang.yacloud.eu/apis/autodeployercommon v1.1.4397
+	golang.yacloud.eu/apis/autodeployercommon v1.1.4400
 	google.golang.org/grpc v1.78.0
 )
 
