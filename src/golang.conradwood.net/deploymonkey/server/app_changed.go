@@ -16,7 +16,7 @@ func (e *DeployMonkey) AppChanged(ctx context.Context, req *deploymonkey.AppChan
 		ipc_s = "IPCName=" + req.IPCName
 	}
 	bn := filepath.Base(appdef.Binary)
-	appname := fmt.Sprintf("[appchange %s appdef-id=%d Binary=%s buildid=%d, deplid=%s, artefactid=%d ipc=%s]", req.DeploymentID, appdef.ID, bn, appdef.BuildID, appdef.DeploymentID, appdef.ArtefactID, ipc_s)
+	appname := fmt.Sprintf("[appchange deplid=%s appdef-id=%d Binary=%s buildid=%d, appdef-deplid=%s, artefactid=%d ipc=%s]", req.DeploymentID, appdef.ID, bn, appdef.BuildID, appdef.DeploymentID, appdef.ArtefactID, ipc_s)
 	fmt.Printf("Autodeployer reports app %s has changed to %v (undeplyrequest=%v) after %d seconds runtime\n", appname, req.Status, req.UndeployRequestReceived, req.RuntimeSeconds)
 	return &common.Void{}, nil
 }
