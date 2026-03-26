@@ -7,6 +7,7 @@ import (
 
 	common "golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/deploymonkey"
+	cm "golang.conradwood.net/deploymonkey/common"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/errors"
 )
@@ -16,9 +17,8 @@ const (
 )
 
 var (
-	apply_suggest_chan   = make(chan *apply_suggest_event)
-	apply_suggest_lock   sync.Mutex
-	applying_suggestions = false
+	apply_suggest_chan = make(chan *apply_suggest_event)
+	apply_suggest_lock sync.Mutex
 )
 
 type apply_suggest_event struct {
@@ -30,7 +30,7 @@ func init() {
 }
 
 func (dm *DeployMonkey) ApplySuggestions(req *common.Void, srv pb.DeployMonkey_ApplySuggestionsServer) error {
-	if applying_suggestions {
+	if cm.IsAutoDeployingCurrently() {
 		return errors.Errorf("Already applying. retry later")
 	}
 	ctx := srv.Context()
@@ -67,10 +67,12 @@ func (dm *DeployMonkey) applySuggestions(sl *pb.SuggestionList) error {
 }
 
 func try_suggestions(s *pb.SuggestionList) error {
-	applying_suggestions = true
-	defer func() {
-		applying_suggestions = false
-	}()
+	if cm.IsAutoDeployingCurrently() {
+		fmt.Printf("Not applying - is applying already\n")
+		return nil
+	}
+	cm.SetAutoDeploying(true)
+	defer cm.SetAutoDeploying(false)
 
 	var err error
 	fmt.Printf("Executing %d requests...\n", len(s.Suggestions))
