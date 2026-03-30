@@ -330,15 +330,17 @@ func waitForCacheStatus(adc ad.AutoDeployerClient, dr *ad.DeployRequest, host st
 	//	ureq := &ad.URLRequest{URL: common.DeployRequest_DownloadURL(dr.GetAppReference().AppDef)}
 	//	ureq := &ad.URLRequest{URL: dr.DownloadURL}
 	ureq := &ad.URLRequest{URL: common.ResolvedDownloadURL(dr.AppReference.AppDef)}
-	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", ureq.URL, host)
+	//	fmt.Printf("[livestate] Checking cache status of %s on %s...\n", ureq.URL, host)
 	query_succeeded := false
 	var lastResponse *ad.URLResponse
 	lastResponseReceived := time.Now()
 	for {
+		fmt.Printf("Caching url \"%s\" on host \"%s\"...\n", ureq.URL, host)
 		ctx := authremote.Context()
 		ur, err := adc.CacheURL(ctx, ureq)
 		if err != nil {
 			if !query_succeeded {
+				fmt.Printf("Failed to cache url \"%s\" on host \"%s\": %s\n", ureq.URL, host, errors.ErrorString(err))
 				return err
 			}
 			if time.Since(lastResponseReceived) > time.Duration(*max_download_no_progress)*time.Second {

@@ -17,15 +17,13 @@ package scheduler
 import (
 	"flag"
 	"fmt"
-	"time"
-
 	pb "golang.conradwood.net/apis/deploymonkey"
-	"golang.conradwood.net/deploymonkey/common"
 	"golang.conradwood.net/deploymonkey/suggest"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
+	"time"
 )
 
 var (
@@ -74,9 +72,6 @@ func (s *Scheduler) loop() {
 	}
 }
 func (s *Scheduler) check() {
-	if common.IsAutoDeployingCurrently() {
-		return
-	}
 	if *debug_sch {
 		fmt.Printf("[scheduler] checking status...\n")
 	}
